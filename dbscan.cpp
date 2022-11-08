@@ -1,4 +1,4 @@
-#include <nanoflann/nanoflann.hpp>
+#include "vendor/nanoflann/nanoflann.hpp"
 
 #include <vector>
 
