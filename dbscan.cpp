@@ -47,7 +47,7 @@ auto sort_clusters(std::vector<std::vector<size_t>>& clusters)
     }
 }
 
-auto dbscan(const std::vector<std::tuple<float, float, float>>& data, float eps, int min_pts)
+auto dbscan(const std::vector<std::tuple<float, float, float>>& data, float eps, int min_pts, int max_pts)
 {
     eps *= eps;
     const auto adapt = adaptor(data);
@@ -67,7 +67,7 @@ auto dbscan(const std::vector<std::tuple<float, float, float>>& data, float eps,
         if (visited[i]) continue;
 
         index.radiusSearch(get_query_point(data, i).data(), eps, matches, SearchParams(32, 0.f, false));
-        if (matches.size() < static_cast<size_t>(min_pts)) continue;
+        if (matches.size() < static_cast<size_t>(min_pts) || matches.size() > static_cast<size_t>(max_pts) ) continue;
         visited[i] = true;
 
         auto cluster = std::vector({i});
@@ -81,7 +81,7 @@ auto dbscan(const std::vector<std::tuple<float, float, float>>& data, float eps,
 
             index.radiusSearch(get_query_point(data, nb_idx).data(), eps, sub_matches, SearchParams(32, 0.f, false));
 
-            if (sub_matches.size() >= static_cast<size_t>(min_pts))
+            if (sub_matches.size() >= static_cast<size_t>(min_pts) && sub_matches.size() <= static_cast<size_t>(max_pts) )
             {
                 std::copy(sub_matches.begin(), sub_matches.end(), std::back_inserter(matches));
             }
@@ -89,6 +89,6 @@ auto dbscan(const std::vector<std::tuple<float, float, float>>& data, float eps,
         }
         clusters.emplace_back(std::move(cluster));
     }
-    sort_clusters(clusters);
+    // sort_clusters(clusters);
     return clusters;
 }
