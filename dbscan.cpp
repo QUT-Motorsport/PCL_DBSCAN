@@ -5,8 +5,8 @@
 // And this is the "dataset to kd-tree" adaptor class:
 struct adaptor
 {
-    const std::vector<std::pair<float, float>>&  points;
-    adaptor(const std::vector<std::pair<float, float>>&  points) : points(points) { }
+    const std::vector<std::tuple<float, float, float>>&  points;
+    adaptor(const std::vector<std::tuple<float, float, float>>&  points) : points(points) { }
 
     /// CRTP helper method
     //inline const Derived& derived() const { return obj; }
@@ -19,7 +19,9 @@ struct adaptor
     //  "if/else's" are actually solved at compile time.
     inline float kdtree_get_pt(const size_t idx, const size_t dim) const
     {
-        return (dim == 0)? points[idx].first: points[idx].second;
+        if (dim == 0) return std::get<0>(points[idx]);
+        else if (dim == 1) return std::get<1>(points[idx]);
+        else return std::get<2>(points[idx]);
     }
 
     // Optional bounding-box computation: return false to default to a standard bbox computation loop.
@@ -31,9 +33,9 @@ struct adaptor
 };
 
 
-auto get_query_point(const std::vector<std::pair<float, float>>& data, size_t index)
+auto get_query_point(const std::vector<std::tuple<float, float, float>>& data, size_t index)
 {
-    return std::array<float, 2>({data[index].first, data[index].second});
+    return std::array<float, 3>({std::get<0>(data[index]), std::get<1>(data[index]), std::get<2>(data[index])});
 }
 
 
@@ -45,14 +47,14 @@ auto sort_clusters(std::vector<std::vector<size_t>>& clusters)
     }
 }
 
-auto dbscan(const std::vector<std::pair<float, float>>& data, float eps, int min_pts)
+auto dbscan(const std::vector<std::tuple<float, float, float>>& data, float eps, int min_pts)
 {
     eps *= eps;
     const auto adapt = adaptor(data);
     using namespace nanoflann;
-    using  my_kd_tree_t = KDTreeSingleIndexAdaptor<L2_Simple_Adaptor<float, decltype(adapt)>, decltype(adapt), 2>;
+    using  my_kd_tree_t = KDTreeSingleIndexAdaptor<L2_Simple_Adaptor<float, decltype(adapt)>, decltype(adapt), 3>;
 
-    auto index = my_kd_tree_t(2, adapt, nanoflann::KDTreeSingleIndexAdaptorParams(10));
+    auto index = my_kd_tree_t(3, adapt, nanoflann::KDTreeSingleIndexAdaptorParams(10));
     index.buildIndex();
 
     auto visited  = std::vector<bool>(data.size());
